@@ -90,9 +90,6 @@ where
     // Dimensions of the image.
     dimensions: ImageDimensions,
 
-    // Number of mipmaps of the image
-    num_mipmaps: MipmapsCount,
-
     // Format.
     format: Format,
 
@@ -224,7 +221,6 @@ impl StorageImage {
             image,
             memory,
             dimensions,
-            num_mipmaps,
             format,
             queue_families,
             gpu_lock: AtomicUsize::new(0),
