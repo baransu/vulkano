@@ -72,6 +72,8 @@ use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
+use super::MipmapsCount;
+
 /// General-purpose image in device memory. Can be used for any usage, but will be slower than a
 /// specialized image.
 #[derive(Debug)]
@@ -87,6 +89,9 @@ where
 
     // Dimensions of the image.
     dimensions: ImageDimensions,
+
+    // Number of mipmaps of the image
+    num_mipmaps: MipmapsCount,
 
     // Format.
     format: Format,
@@ -144,10 +149,36 @@ impl StorageImage {
     where
         I: IntoIterator<Item = QueueFamily<'a>>,
     {
+        StorageImage::with_mipmaps_usage(
+            device,
+            dimensions,
+            format,
+            MipmapsCount::One,
+            usage,
+            flags,
+            queue_families,
+        )
+    }
+
+    /// Same as `new`, but allows specifying the usage.
+    pub fn with_mipmaps_usage<'a, I>(
+        device: Arc<Device>,
+        dimensions: ImageDimensions,
+        format: Format,
+        mipmaps: MipmapsCount,
+        usage: ImageUsage,
+        flags: ImageCreateFlags,
+        queue_families: I,
+    ) -> Result<Arc<StorageImage>, ImageCreationError>
+    where
+        I: IntoIterator<Item = QueueFamily<'a>>,
+    {
         let queue_families = queue_families
             .into_iter()
             .map(|f| f.id())
             .collect::<SmallVec<[u32; 4]>>();
+
+        let num_mipmaps = mipmaps.into();
 
         let (image, mem_reqs) = unsafe {
             let sharing = if queue_families.len() >= 2 {
@@ -163,7 +194,7 @@ impl StorageImage {
                 flags,
                 dimensions,
                 SampleCount::Sample1,
-                1,
+                num_mipmaps,
                 sharing,
                 false,
                 false,
@@ -193,6 +224,7 @@ impl StorageImage {
             image,
             memory,
             dimensions,
+            num_mipmaps,
             format,
             queue_families,
             gpu_lock: AtomicUsize::new(0),
@@ -312,7 +344,7 @@ where
             first_layer: 0,
             num_layers: self.dimensions.array_layers() as usize,
             first_mipmap_level: 0,
-            num_mipmap_levels: 1,
+            num_mipmap_levels: self.mipmap_levels() as usize,
         }
     }
 
