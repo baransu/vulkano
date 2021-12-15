@@ -158,24 +158,26 @@ impl StorageImage {
     }
 
     /// Same as `new`, but allows specifying the usage.
-    pub fn with_mipmaps_usage<'a, I>(
+    pub fn with_mipmaps_usage<'a, I, M>(
         device: Arc<Device>,
         dimensions: ImageDimensions,
         format: Format,
-        mipmaps: MipmapsCount,
+
+        mipmaps: M,
         usage: ImageUsage,
         flags: ImageCreateFlags,
         queue_families: I,
     ) -> Result<Arc<StorageImage>, ImageCreationError>
     where
         I: IntoIterator<Item = QueueFamily<'a>>,
+        M: Into<MipmapsCount>,
     {
         let queue_families = queue_families
             .into_iter()
             .map(|f| f.id())
             .collect::<SmallVec<[u32; 4]>>();
 
-        let num_mipmaps = mipmaps.into();
+        let num_mipmaps: MipmapsCount = mipmaps.into();
 
         let (image, mem_reqs) = unsafe {
             let sharing = if queue_families.len() >= 2 {
