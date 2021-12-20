@@ -358,6 +358,35 @@ impl ImmutableImage {
         B: TypedBufferAccess<Content = [Px]> + 'static,
         Px: Pixel + Send + Sync + Clone + 'static,
     {
+        ImmutableImage::from_buffer_with_flags(
+            source,
+            dimensions,
+            mipmaps,
+            format,
+            queue,
+            ImageCreateFlags::none(),
+        )
+    }
+
+    /// Construct an ImmutableImage containing a copy of the data in `source`. Allos to specify additional flags.
+    pub fn from_buffer_with_flags<B, Px>(
+        source: Arc<B>,
+        dimensions: ImageDimensions,
+        mipmaps: MipmapsCount,
+        format: Format,
+        queue: Arc<Queue>,
+        flags: ImageCreateFlags,
+    ) -> Result<
+        (
+            Arc<Self>,
+            CommandBufferExecFuture<NowFuture, PrimaryAutoCommandBuffer>,
+        ),
+        ImageCreationError,
+    >
+    where
+        B: TypedBufferAccess<Content = [Px]> + 'static,
+        Px: Pixel + Send + Sync + Clone + 'static,
+    {
         let need_to_generate_mipmaps = has_mipmaps(mipmaps);
         let usage = ImageUsage {
             transfer_destination: true,
@@ -365,7 +394,7 @@ impl ImmutableImage {
             sampled: true,
             ..ImageUsage::none()
         };
-        let flags = ImageCreateFlags::none();
+
         let layout = ImageLayout::ShaderReadOnlyOptimal;
 
         let (image, initializer) = ImmutableImage::uninitialized(
