@@ -62,7 +62,7 @@ fn write_shader_execution(execution: &ShaderExecution) -> TokenStream {
         ShaderExecution::Geometry(GeometryShaderExecution { input }) => {
             let input = format_ident!("{}", format!("{:?}", input));
             quote! {
-                ShaderExecution::Geometry({
+                ShaderExecution::Geometry(GeometryShaderExecution {
                     input: GeometryShaderInput::#input,
                 })
             }
