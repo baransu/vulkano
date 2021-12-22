@@ -10,16 +10,24 @@
 use fnv::FnvHashMap;
 use proc_macro2::TokenStream;
 use vulkano::pipeline::layout::PipelineLayoutPcRange;
+use vulkano::shader::spirv::ExecutionModel;
 use vulkano::shader::{
     DescriptorRequirements, GeometryShaderExecution, ShaderExecution, ShaderInterfaceEntry,
     ShaderInterfaceEntryType, SpecializationConstantRequirements,
 };
 use vulkano::shader::{EntryPointInfo, ShaderInterface, ShaderStages};
-use vulkano::shader::spirv::ExecutionModel;
 
-pub(super) fn write_entry_point(name: &str, model: ExecutionModel, info: &EntryPointInfo) -> TokenStream {
+pub(super) fn write_entry_point(
+    name: &str,
+    model: ExecutionModel,
+    info: &EntryPointInfo,
+) -> TokenStream {
     let execution = write_shader_execution(&info.execution);
-    let model = syn::parse_str::<syn::Path>(&format!("vulkano::shader::spirv::ExecutionModel::{:?}", model)).unwrap();
+    let model = syn::parse_str::<syn::Path>(&format!(
+        "vulkano::shader::spirv::ExecutionModel::{:?}",
+        model
+    ))
+    .unwrap();
     let descriptor_requirements = write_descriptor_requirements(&info.descriptor_requirements);
     let push_constant_requirements =
         write_push_constant_requirements(&info.push_constant_requirements);
@@ -54,9 +62,9 @@ fn write_shader_execution(execution: &ShaderExecution) -> TokenStream {
         ShaderExecution::Geometry(GeometryShaderExecution { input }) => {
             let input = format_ident!("{}", format!("{:?}", input));
             quote! {
-                ShaderExecution::Geometry {
+                ShaderExecution::Geometry({
                     input: GeometryShaderInput::#input,
-                }
+                })
             }
         }
         ShaderExecution::Fragment => quote! { ShaderExecution::Fragment },
