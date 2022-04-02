@@ -649,6 +649,8 @@ pub struct QueryResultFlags {
     /// Allow writing partial results to the buffer, instead of waiting until they are fully
     /// available.
     pub partial: bool,
+
+    pub type_64: bool,
 }
 
 impl From<QueryResultFlags> for ash::vk::QueryResultFlags {
@@ -663,6 +665,9 @@ impl From<QueryResultFlags> for ash::vk::QueryResultFlags {
         }
         if value.partial {
             result |= ash::vk::QueryResultFlags::PARTIAL;
+        }
+        if value.type_64 {
+            result |= ash::vk::QueryResultFlags::TYPE_64;
         }
         result
     }
